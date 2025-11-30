@@ -1,5 +1,6 @@
 package com.example.matchpredictor.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -37,9 +38,11 @@ public class Team {
     private LocalDateTime createdAt;
 
     //One-to-Many relationship with Match
-    @OneToMany(mappedBy = "homeTeam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference("team-homeMatches")
+    @OneToMany(mappedBy = "homeTeam", cascade = CascadeType. ALL, fetch = FetchType. LAZY)
     private List<Match> homeMatches;
 
+    @JsonManagedReference("team-awayMatches")
     @OneToMany(mappedBy = "awayTeam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Match> awayMatches;
 

@@ -6,6 +6,7 @@ import com.example.matchpredictor.repository.AiPredictionRepository;
 import org.springframework.ai.ollama.OllamaChatClient;
 import org.springframework.ai.chat.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -31,18 +32,22 @@ public class AiPredictionService {
         Match match = matchService.getMatchById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match not found with id: " + matchId));
 
-        // Create prompt for AI
         String prompt = createPredictionPrompt(match);
 
         try {
-            // Get AI response
-            ChatResponse response = ollamaChatClient.call(new Prompt(prompt));
-            String aiResponse = response.getResult().getOutput().getContent();
+            // Create NEW client with explicit model (same as working TestController)
+            OllamaApi directApi = new OllamaApi("http://localhost:11434");
+            OllamaChatClient directClient = new OllamaChatClient(directApi);
 
-            // Parse AI response (simplified - you can enhance this)
+            ChatResponse response = directClient.call(
+                    new Prompt(prompt,
+                            org.springframework.ai.ollama. api.OllamaOptions. create()
+                                    .withModel("llama3.2"))
+            );
+
+            String aiResponse = response.getResult().getOutput().getContent();
             AiPrediction prediction = parseAiResponse(match, aiResponse);
             prediction.setModelVersion("llama3.2");
-
             return aiPredictionRepository.save(prediction);
 
         } catch (Exception e) {

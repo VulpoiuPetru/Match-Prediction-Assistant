@@ -47,8 +47,7 @@ public class AiPrediction {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reasoning;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "TEXT")
     private String parameters;
 
     @DecimalMin(value = "0.00", message = "Confidence score must be at least 0.00")
