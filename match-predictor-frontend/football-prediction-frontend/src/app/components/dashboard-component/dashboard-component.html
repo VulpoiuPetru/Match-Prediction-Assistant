@@ -1,0 +1,304 @@
+<div class="dashboard-container">
+  
+  <!-- Page Header -->
+  <div class="header">
+    <h1>⚽ Football Predictions Dashboard</h1>
+    <p>AI-powered match predictions and team analytics</p>
+  </div>
+
+
+  <!-- Stats Overview -->
+  <div class="stats-section">
+    <mat-card class="stat-card teams-stat">
+      <mat-card-content>
+        <div class="stat-number">{{ teams.length }}</div>
+        <div class="stat-label">Teams</div>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="stat-card matches-stat">
+      <mat-card-content>
+        <div class="stat-number">{{ matches.length }}</div>
+        <div class="stat-label">Matches</div>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="stat-card predictions-stat">
+      <mat-card-content>
+        <div class="stat-number">{{ totalPredictions }}</div>
+        <div class="stat-label">Predictions</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card confidence-stat">
+      <mat-card-content>
+        <div class="stat-number">{{ avgConfidence }}%</div>
+        <div class="stat-label">Avg Confidence</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="main-grid">
+    
+    <!-- Teams Section -->
+    <mat-card class="section-card teams-section">
+      <mat-card-header>
+        <mat-card-title>👥 Teams</mat-card-title>
+        <mat-card-subtitle>All registered teams</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <!-- Loading State -->
+        <div *ngIf="isLoadingTeams" class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading teams...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="teamsError" class="error-state">
+          <mat-icon color="warn">error</mat-icon>
+          <p>{{ teamsError }}</p>
+          <button mat-raised-button color="primary" (click)="loadTeams()">
+            <mat-icon>refresh</mat-icon>
+            Retry
+          </button>
+        </div>
+
+        <!-- Teams List -->
+        <div *ngIf="! isLoadingTeams && ! teamsError" class="teams-list">
+          <div *ngFor="let team of teams" class="team-item">
+            <div class="team-info">
+              <div class="team-name">{{ team.name }}</div>
+              <div class="team-country">{{ team.country }}</div>
+            </div>
+            <div class="team-meta">
+              <span class="founded-year" *ngIf="team.foundedYear">
+                Founded: {{ team.foundedYear }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="teams.length === 0" class="empty-state">
+            <mat-icon>sports_soccer</mat-icon>
+            <p>No teams found</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+       <!-- Matches Section -->
+    <mat-card class="section-card matches-section">
+      <mat-card-header>
+        <mat-card-title>⚽ Matches</mat-card-title>
+        <mat-card-subtitle>Upcoming matches</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <!-- Loading State -->
+        <div *ngIf="isLoadingMatches" class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading matches...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="matchesError" class="error-state">
+          <mat-icon color="warn">error</mat-icon>
+          <p>{{ matchesError }}</p>
+          <button mat-raised-button color="primary" (click)="loadMatches()">
+            <mat-icon>refresh</mat-icon>
+            Retry
+          </button>
+        </div>
+
+        <!-- Matches List -->
+        <div *ngIf="!isLoadingMatches && ! matchesError" class="matches-list">
+          <div *ngFor="let match of matches" class="match-item">
+            <!-- Match Info -->
+            <div class="match-info">
+              <div class="match-teams">
+                <span class="home-team">{{ match.homeTeam.name }}</span>
+                <span class="vs">vs</span>
+                <span class="away-team">{{ match.awayTeam.name }}</span>
+              </div>
+              <div class="match-details">
+                <div class="match-date">{{ formatMatchDate(match.matchDate) }}</div>
+                <div class="match-venue" *ngIf="match.venue">{{ match.venue }}</div>
+                <div class="match-league">{{ match.league }}</div>
+              </div>
+            </div>
+            
+            <!-- Predict Button -->
+            <div class="match-actions">
+              <button 
+                mat-raised-button 
+                color="primary" 
+                [disabled]="predictingMatchId === match.id"
+                (click)="generatePrediction(match)">
+                <mat-spinner *ngIf="predictingMatchId === match.id" diameter="20"></mat-spinner>
+                <mat-icon *ngIf="predictingMatchId !== match.id">psychology</mat-icon>
+                {{ predictingMatchId === match.id ? 'Predicting...' : 'Predict' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="matches.length === 0" class="empty-state">
+            <mat-icon>sports_soccer</mat-icon>
+            <p>No upcoming matches found</p>
+            <button mat-raised-button color="primary" (click)="loadMatches()">
+              <mat-icon>refresh</mat-icon>
+              Refresh
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+     <!-- AI Chat Section -->
+    <mat-card class="section-card ai-section">
+      <mat-card-header>
+        <mat-card-title>🤖 AI Chat</mat-card-title>
+        <mat-card-subtitle>Ask about team predictions</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        
+        <!-- Chat Messages -->
+        <div class="chat-container">
+          <div class="chat-messages">
+            <div *ngFor="let message of chatMessages" 
+                 class="message"
+                 [class.user-message]="message.role === 'user'"
+                 [class.ai-message]="message. role === 'ai'">
+              
+              <div class="message-content">
+                <div class="message-text">{{ message.content }}</div>
+                <div class="message-time">
+                  {{ message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}
+                </div>
+              </div>
+              
+              <div class="message-avatar">
+                <mat-icon *ngIf="message.role === 'user'">person</mat-icon>
+                <mat-icon *ngIf="message.role === 'ai'">smart_toy</mat-icon>
+              </div>
+            </div>
+
+            <!-- AI Thinking -->
+            <div *ngIf="isAiThinking" class="message ai-message thinking">
+              <div class="message-content">
+                <div class="message-text">
+                  <mat-spinner diameter="20"></mat-spinner>
+                  AI is thinking...
+                </div>
+              </div>
+              <div class="message-avatar">
+                <mat-icon>smart_toy</mat-icon>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input">
+            <mat-form-field appearance="outline" class="message-field">
+              <mat-label>Ask about predictions... </mat-label>
+              <input matInput 
+                     [(ngModel)]="userMessage"
+                     (keydown)="onEnterKey($event)"
+                     [disabled]="isAiThinking"
+                     placeholder="e.g., 'Real Madrid vs Barcelona'">
+            </mat-form-field>
+            <button mat-fab 
+                    color="primary" 
+                    [disabled]="! userMessage.trim() || isAiThinking"
+                    (click)="sendMessage()">
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  <!-- Recent Predictions (placeholder) -->
+   <mat-card class="section-card predictions-section">
+    <mat-card-header>
+      <mat-card-title>📊 Recent Predictions</mat-card-title>
+      <mat-card-subtitle>Latest AI predictions with confidence scores</mat-card-subtitle>
+      <div class="spacer"></div>
+      <button mat-icon-button (click)="refreshPredictions()" [disabled]="isLoadingPredictions">
+        <mat-icon [class.spinning]="isLoadingPredictions">refresh</mat-icon>
+      </button>
+    </mat-card-header>
+    <mat-card-content>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoadingPredictions" class="loading-state">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading predictions...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="predictionsError" class="error-state">
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ predictionsError }}</p>
+        <button mat-raised-button color="primary" (click)="loadRecentPredictions()">
+          <mat-icon>refresh</mat-icon>
+          Retry
+        </button>
+      </div>
+
+      <!-- Predictions List -->
+      <div *ngIf="!isLoadingPredictions && !predictionsError" class="predictions-list">
+        <div *ngFor="let prediction of recentPredictions; trackBy: trackPrediction" class="prediction-item">
+          
+          <!-- Prediction Header -->
+          <div class="prediction-header">
+            <div class="prediction-match">
+              <span class="team-name home">{{ prediction.homeTeam.name }}</span>
+              <div class="score-prediction">
+                <span class="score">{{ prediction.predictedHomeScore }}</span>
+                <span class="separator">:</span>
+                <span class="score">{{ prediction.predictedAwayScore }}</span>
+              </div>
+              <span class="team-name away">{{ prediction.awayTeam.name }}</span>
+            </div>
+            
+            <div class="prediction-meta">
+              <div class="confidence-badge" [ngClass]="getConfidenceColor(prediction.confidence)">
+                {{ prediction.confidence }}% confident
+              </div>
+              <div class="prediction-time">{{ getTimeAgo(prediction.predictionDate) }}</div>
+            </div>
+          </div>
+
+          <!-- Prediction Details -->
+          <div class="prediction-details">
+            <div class="league-info">
+              <mat-icon>sports_soccer</mat-icon>
+              {{ prediction.league }}
+            </div>
+            <div class="explanation">
+              <mat-icon>lightbulb</mat-icon>
+              {{ prediction.explanation }}
+            </div>
+          </div>
+
+          <!-- Confidence Bar -->
+          <div class="confidence-bar">
+            <div class="confidence-fill" [style.width.%]="prediction.confidence"></div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="recentPredictions.length === 0" class="empty-state">
+          <mat-icon>analytics</mat-icon>
+          <p>No predictions yet</p>
+          <p class="empty-subtitle">Generate your first prediction using the matches section!</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</div>
