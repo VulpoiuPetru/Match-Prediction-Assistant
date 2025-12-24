@@ -27,6 +27,10 @@ public class AiPredictionService {
     @Autowired
     private OllamaChatClient ollamaChatClient;
 
+    // Add this field with other @Autowired fields
+    @Autowired
+    private ChromaDbService chromaDbService;
+
     //Generate AI prediction for a match
     public AiPrediction generatePrediction(Integer matchId) {
         Match match = matchService.getMatchById(matchId)
@@ -48,7 +52,16 @@ public class AiPredictionService {
             String aiResponse = response.getResult().getOutput().getContent();
             AiPrediction prediction = parseAiResponse(match, aiResponse);
             prediction.setModelVersion("llama3.2");
-            return aiPredictionRepository.save(prediction);
+
+            // save to PostgreSQL (JPA repository)
+            AiPrediction savedPrediction = aiPredictionRepository. save(prediction);
+
+            //store in ChromaDB for vector search & history
+            chromaDbService.storePrediction(savedPrediction);
+
+            return savedPrediction;
+
+            //return aiPredictionRepository.save(prediction);
 
         } catch (Exception e) {
             throw new RuntimeException("Error generating AI prediction: " + e.getMessage());

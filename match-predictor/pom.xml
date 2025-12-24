@@ -75,6 +75,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- ChromaDB Java Client -->
+        <dependency>
+            <groupId>io.github.amikos-tech</groupId>
+            <artifactId>chromadb-java-client</artifactId>
+            <version>0.1.7</version>
+        </dependency>
+
 
     </dependencies>
 
