@@ -1,6 +1,7 @@
 package com.example.matchpredictor.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -20,14 +21,12 @@ public class Match {
     private Integer id;
 
     @NotNull(message = "Home team is required")
-    @JsonBackReference("team-homeMatches")
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name ="home_team_id", nullable = false)
+    @JoinColumn(name = "home_team_id", nullable = false)
     private Team homeTeam;
 
     @NotNull(message = "Away team is required")
-    @JsonBackReference("team-awayMatches")
-    @ManyToOne(fetch = FetchType. EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "away_team_id", nullable = false)
     private Team awayTeam;
 
@@ -58,13 +57,13 @@ public class Match {
     private LocalDateTime createdAt;
 
     //One-toMany relationship with AiPrediction
-    @JsonManagedReference("match-predictions")
+    @JsonIgnore
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<AiPrediction> aiPredictions;
 
     // One-to-Many relationship with UserPrediction
-    @JsonManagedReference("match-userPredictions")
-    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, fetch = FetchType. LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserPrediction> userPredictions;
 
     // Constructors

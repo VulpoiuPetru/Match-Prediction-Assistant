@@ -72,4 +72,32 @@ public class ChromaDbController {
                 "count", results. size()
         ));
     }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<Map<String, Object>> getAnalytics() {
+        return ResponseEntity.ok(chromaDbService.getAnalytics());
+    }
+
+    @GetMapping("/history/{homeTeam}/{awayTeam}")
+    public ResponseEntity<String> getHistoricalContext(
+            @PathVariable String homeTeam,
+            @PathVariable String awayTeam) {
+
+        if (!chromaDbService.isConnected()) {
+            return ResponseEntity.ok("ChromaDB not connected");
+        }
+
+        String context = chromaDbService.getHistoricalContext(homeTeam, awayTeam);
+        return ResponseEntity.ok(context);
+    }
+
+    @PostMapping("/regenerate-analytics")
+    public ResponseEntity<String> regenerateAnalytics() {
+        if (!chromaDbService.isConnected()) {
+            return ResponseEntity.ok("ChromaDB not connected");
+        }
+
+        chromaDbService.generateAnalytics();
+        return ResponseEntity.ok("Analytics regenerated successfully");
+    }
 }

@@ -38,11 +38,11 @@ public class Team {
     private LocalDateTime createdAt;
 
     //One-to-Many relationship with Match
-    @JsonManagedReference("team-homeMatches")
-    @OneToMany(mappedBy = "homeTeam", cascade = CascadeType. ALL, fetch = FetchType. LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @OneToMany(mappedBy = "homeTeam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Match> homeMatches;
 
-    @JsonManagedReference("team-awayMatches")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "awayTeam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Match> awayMatches;
 
