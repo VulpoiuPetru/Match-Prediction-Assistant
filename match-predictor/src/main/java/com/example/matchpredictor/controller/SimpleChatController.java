@@ -2,12 +2,15 @@ package com.example.matchpredictor.controller;
 
 import com.example.matchpredictor.service.MatchService;
 import com.example.matchpredictor.service.TeamService;
+import com.example.matchpredictor.service.AiPredictionService; // ← ADAUGĂ
 import com.example.matchpredictor.entity.Match;
 import com.example.matchpredictor.entity.Team;
+import com.example.matchpredictor.entity.AiPrediction; // ← ADAUGĂ
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +18,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chat")
-@CrossOrigin(origins = "*")
 public class SimpleChatController {
 
     @Autowired
@@ -24,9 +26,9 @@ public class SimpleChatController {
     @Autowired
     private TeamService teamService;
 
-    /**
-     * Simple chat endpoint that returns predictions based on team names
-     */
+    @Autowired
+    private AiPredictionService aiPredictionService; // ← ADAUGĂ
+
     @PostMapping("/message")
     public ResponseEntity<Map<String, String>> sendMessage(@RequestBody Map<String, String> request) {
         String message = request.get("message");
@@ -47,12 +49,14 @@ public class SimpleChatController {
     private String generateResponse(String message) {
         // Greetings
         if (message.contains("hello") || message.contains("hi") || message.contains("hey")) {
-            return "Hello! I'm your AI football prediction assistant. Ask me about any upcoming match!";
+            return "🤖 Hello! I'm your AI football prediction assistant powered by RAG (Retrieval-Augmented Generation). " +
+                    "I use real historical data and Ollama's LLaMA 3.2 to make predictions!\n\n" +
+                    "Try: 'Chelsea vs Arsenal' or 'Real Madrid vs Barcelona'";
         }
 
         // Help
         if (message.contains("help")) {
-            return "I can help you with match predictions! Try asking:\n" +
+            return "I can help you with AI-powered match predictions using RAG! Try asking:\n" +
                     "- 'Real Madrid vs Barcelona'\n" +
                     "- 'Who will win Liverpool vs Chelsea?'\n" +
                     "- 'Show me upcoming matches'\n" +
@@ -67,7 +71,7 @@ public class SimpleChatController {
             }
 
             String teamList = teams.stream()
-                    .limit(10) // Show first 10 teams
+                    .limit(10)
                     .map(t -> t.getName() + " (" + t.getCountry() + ")")
                     .collect(Collectors.joining(", "));
 
@@ -91,7 +95,7 @@ public class SimpleChatController {
             return "Upcoming matches:\n" + matchList;
         }
 
-        // Predict specific match (try to extract team names)
+        // Predict specific match using RAG
         if (message.contains("vs") || message.contains("predict")) {
             String[] parts = message.split("vs");
             if (parts.length == 2) {
@@ -104,7 +108,7 @@ public class SimpleChatController {
                         .replace("?", "")
                         .trim();
 
-                return generatePredictionResponse(team1Name, team2Name);
+                return generateRAGPrediction(team1Name, team2Name); // ← Folosește RAG
             }
         }
 
@@ -130,69 +134,101 @@ public class SimpleChatController {
                 "- Type 'help' for more options";
     }
 
-    private String generatePredictionResponse(String team1, String team2) {
-        // Try to find teams in database
-        List<Team> allTeams = teamService.getAllTeams();
+    /**
+     * Generate RAG-powered prediction using AiPredictionService
+     */
+    private String generateRAGPrediction(String team1, String team2) {
+        try {
+            // Find teams in database
+            List<Team> allTeams = teamService.getAllTeams();
 
-        Team foundTeam1 = allTeams.stream()
-                .filter(t -> t.getName().toLowerCase().contains(team1.toLowerCase()) ||
-                        team1.toLowerCase().contains(t.getName().toLowerCase()))
-                .findFirst()
-                .orElse(null);
+            Team foundTeam1 = allTeams.stream()
+                    .filter(t -> t.getName().toLowerCase().contains(team1.toLowerCase()) ||
+                            team1.toLowerCase().contains(t.getName().toLowerCase()))
+                    .findFirst()
+                    .orElse(null);
 
-        Team foundTeam2 = allTeams.stream()
-                .filter(t -> t.getName().toLowerCase().contains(team2.toLowerCase()) ||
-                        team2.toLowerCase().contains(t.getName().toLowerCase()))
-                .findFirst()
-                .orElse(null);
+            Team foundTeam2 = allTeams.stream()
+                    .filter(t -> t.getName().toLowerCase().contains(team2.toLowerCase()) ||
+                            team2.toLowerCase().contains(t.getName().toLowerCase()))
+                    .findFirst()
+                    .orElse(null);
 
-        if (foundTeam1 == null || foundTeam2 == null) {
+            if (foundTeam1 == null || foundTeam2 == null) {
+                return String.format(
+                        "❌ I couldn't find both teams in the database.\n\n" +
+                                "Available teams: %s",
+                        allTeams.stream().limit(10).map(Team::getName).collect(Collectors.joining(", "))
+                );
+            }
+
+            // Check if match already exists
+            List<Match> upcomingMatches = matchService.getUpcomingMatches();
+            Match existingMatch = upcomingMatches.stream()
+                    .filter(m ->
+                            (m.getHomeTeam().getId().equals(foundTeam1.getId()) &&
+                                    m.getAwayTeam().getId().equals(foundTeam2.getId())) ||
+                                    (m.getHomeTeam().getId().equals(foundTeam2.getId()) &&
+                                            m.getAwayTeam().getId().equals(foundTeam1.getId()))
+                    )
+                    .findFirst()
+                    .orElse(null);
+
+            Match matchToPredict;
+
+            // If match doesn't exist, create a temporary one
+            if (existingMatch == null) {
+                System.out.println("🔨 Creating temporary match for prediction...");
+                Match tempMatch = new Match();
+                tempMatch.setHomeTeam(foundTeam1);
+                tempMatch.setAwayTeam(foundTeam2);
+                tempMatch.setLeague("Friendly/Chat Prediction");
+                tempMatch.setMatchDate(LocalDateTime.now().plusDays(7));
+                tempMatch.setStatus("SCHEDULED");
+
+                // Save temporary match
+                matchToPredict = matchService.createMatch(tempMatch);
+            } else {
+                matchToPredict = existingMatch;
+            }
+
+            // Generate RAG prediction using AiPredictionService
+            System.out.println("🤖 Generating RAG prediction for match ID: " + matchToPredict.getId());
+            AiPrediction prediction = aiPredictionService.generatePrediction(matchToPredict.getId());
+
+            // Format the response
             return String.format(
-                    "I couldn't find both teams in the database. Available teams: %s",
-                    allTeams.stream().limit(5).map(Team::getName).collect(Collectors.joining(", "))
+                    "🤖 **AI-Powered RAG Prediction**\n\n" +
+                            "**%s vs %s**\n" +
+                            "League: %s\n\n" +
+                            "📊 **Probabilities:**\n" +
+                            "🏠 %s: %.1f%%\n" +
+                            "⚖️ Draw: %.1f%%\n" +
+                            "✈️ %s: %.1f%%\n\n" +
+                            "🧠 **AI Reasoning:**\n%s\n\n" +
+                            "🎯 Confidence: %.0f%%\n" +
+                            "🔬 Model: %s",
+                    foundTeam1.getName(),
+                    foundTeam2.getName(),
+                    matchToPredict.getLeague(),
+                    foundTeam1.getName(),
+                    prediction.getHomeWinProbability(),
+                    prediction.getDrawProbability(),
+                    foundTeam2.getName(),
+                    prediction.getAwayWinProbability(),
+                    prediction.getReasoning(),
+                    prediction.getConfidenceScore().doubleValue() * 100,
+                    prediction.getModelVersion() != null ? prediction.getModelVersion() : "llama3.2-RAG"
             );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "❌ **Error generating AI prediction**\n\n" +
+                    "Make sure:\n" +
+                    "✓ Ollama is running (http://localhost:11434)\n" +
+                    "✓ llama3.2 model is installed (`ollama pull llama3.2`)\n" +
+                    "✓ Database is connected\n\n" +
+                    "Error details: " + e.getMessage();
         }
-
-        // Check if there's an upcoming match between these teams
-        List<Match> upcomingMatches = matchService.getUpcomingMatches();
-        Match foundMatch = upcomingMatches.stream()
-                .filter(m ->
-                        (m.getHomeTeam().getId().equals(foundTeam1.getId()) &&
-                                m.getAwayTeam().getId().equals(foundTeam2.getId())) ||
-                                (m.getHomeTeam().getId().equals(foundTeam2.getId()) &&
-                                        m.getAwayTeam().getId().equals(foundTeam1.getId()))
-                )
-                .findFirst()
-                .orElse(null);
-
-        if (foundMatch != null) {
-            return String.format(
-                    "Great! I found the match: %s vs %s in %s.\n\n" +
-                            "Based on current analysis:\n" +
-                            "🏠 %s (home): ~55%% chance\n" +
-                            "⚖️ Draw: ~25%% chance\n" +
-                            "✈️ %s (away): ~20%% chance\n\n" +
-                            "Home advantage typically plays a significant role. Click 'Predict' on this match for detailed AI analysis!",
-                    foundMatch.getHomeTeam().getName(),
-                    foundMatch.getAwayTeam().getName(),
-                    foundMatch.getLeague(),
-                    foundMatch.getHomeTeam().getName(),
-                    foundMatch.getAwayTeam().getName()
-            );
-        }
-
-        // Generic prediction if no match scheduled
-        return String.format(
-                "No scheduled match found between %s and %s, but here's my general analysis:\n\n" +
-                        "🔵 %s has a strong record against %s historically.\n" +
-                        "📊 Head-to-head advantage and current form would be key factors.\n" +
-                        "🏆 League standings and recent performances matter significantly.\n\n" +
-                        "Would you like to create a match between these teams to get a detailed AI prediction?",
-                foundTeam1.getName(),
-                foundTeam2.getName(),
-                foundTeam1.getName(),
-                foundTeam2.getName()
-        );
     }
-
 }

@@ -72,6 +72,28 @@ export class DashboardComponent implements OnInit {
     }];
   }
 
+  // sendChat() {
+  //   if (!this.userMessage.trim() || this.isThinking) return;
+
+  //   const message = this.userMessage.trim();
+  //   this.chatMessages.push({ role: 'user', content: message });
+  //   this.userMessage = '';
+  //   this.isThinking = true;
+
+  //   this.http.post<{response: string}>(`${this.API}/chat/message`, { message }).subscribe({
+  //     next: (data) => {
+  //       this.chatMessages.push({ role: 'ai', content: data.response });
+  //       this.isThinking = false;
+  //     },
+  //     error: () => {
+  //       this.chatMessages.push({ 
+  //         role: 'ai', 
+  //         content: '❌ Error connecting to server. Make sure backend is running!' 
+  //       });
+  //       this.isThinking = false;
+  //     }
+  //   });
+  // }
   sendChat() {
     if (!this.userMessage.trim() || this.isThinking) return;
 
@@ -84,16 +106,19 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.chatMessages.push({ role: 'ai', content: data.response });
         this.isThinking = false;
+        this.cdr.detectChanges(); // ← ADAUGĂ ACEASTĂ LINIE
       },
-      error: () => {
+      error: (err) => {
+        console.error('❌ HTTP Error:', err);
         this.chatMessages.push({ 
           role: 'ai', 
           content: '❌ Error connecting to server. Make sure backend is running!' 
         });
         this.isThinking = false;
+        this.cdr.detectChanges(); // ← ADAUGĂ ACEASTĂ LINIE
       }
     });
-  }
+}
 
   loadTeams() {
     this.loadingTeams = true;
@@ -134,61 +159,28 @@ export class DashboardComponent implements OnInit {
       this.manualPrediction = null;
       this.cdr.detectChanges();
 
-      // Check if match exists
-      this.http.get<any[]>(`${this.API}/predictions/upcoming-matches`).subscribe({
-        next: (matches) => {
-          const match = matches.find(m => 
-            (m.homeTeam.id === this.selectedTeam1.id && m.awayTeam.id === this.selectedTeam2.id) ||
-            (m.homeTeam.id === this.selectedTeam2.id && m.awayTeam.id === this.selectedTeam1.id)
-          );
+      // Call the new RAG endpoint
+      const requestBody = {
+        homeTeamId: this.selectedTeam1.id,
+        awayTeamId: this.selectedTeam2.id
+      };
 
-          if (match) {
-            this.generatePredictionForMatch(match.id);
-          } else {
-            this.createTempPrediction();
-          }
+      this.http.post<any>(`${this.API}/predictions/predict-teams`, requestBody).subscribe({
+        next: (prediction) => {
+          this.manualPrediction = prediction;
+          this.isPredictingManual = false;
+          this.cdr.detectChanges();
+          this.snackBar.open('✅ RAG Prediction with real data generated!', 'Close', { duration: 3000 });
+          this.loadPredictions();
         },
-        error: () => {
-          this.createTempPrediction();
+        error: (err) => {
+          this.isPredictingManual = false;
+          this.cdr.detectChanges();
+          console.error('RAG Prediction error:', err);
+          this.snackBar.open('❌ Failed! Check if Ollama is running with llama3.2', 'Close', { duration: 5000 });
         }
       });
     }, 0);
-  }
-
-  generatePredictionForMatch(matchId: number) {
-    this.http.post(`${this.API}/predictions/generate/${matchId}`, {}).subscribe({
-      next: (prediction: any) => {
-        this.manualPrediction = prediction;
-        this.isPredictingManual = false;
-        this.cdr.detectChanges();
-        this.snackBar.open('✅ Prediction generated!', 'Close', { duration: 3000 });
-        this.loadPredictions();
-      },
-      error: () => {
-        this.isPredictingManual = false;
-        this.cdr.detectChanges();
-        this.snackBar.open('❌ Prediction failed. Check if Ollama is running!', 'Close', { duration: 5000 });
-      }
-    });
-  }
-
-  createTempPrediction() {
-    this.manualPrediction = {
-      match: {
-        homeTeam: this.selectedTeam1,
-        awayTeam: this.selectedTeam2,
-        league: 'Friendly Match'
-      },
-      homeWinProbability: 45,
-      drawProbability: 30,
-      awayWinProbability: 25,
-      reasoning: `Based on general analysis, ${this.selectedTeam1.name} has a slight advantage as the home team. Create an official match between these teams for detailed AI prediction using real data.`,
-      modelVersion: 'Quick Analysis',
-      createdAt: new Date()
-    };
-    this.isPredictingManual = false;
-    this.cdr.detectChanges();
-    this.snackBar.open('ℹ️ Quick prediction (no match scheduled)', 'Close', { duration: 3000 });
   }
 
   formatDate(date: string): string {
