@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -39,6 +39,7 @@ export class DashboardComponent implements OnInit {
 
  private http = inject(HttpClient);
   private snackBar = inject(MatSnackBar);
+  private cdr = inject(ChangeDetectorRef);
   private API = 'http://localhost:8080/api';
   
   teams: any[] = [];
@@ -127,29 +128,31 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.isPredictingManual = true;
-    this.manualPrediction = null;
+    // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.isPredictingManual = true;
+      this.manualPrediction = null;
+      this.cdr.detectChanges();
 
-    // First, find or create a match between these teams
-    this.http.get<any[]>(`${this.API}/predictions/upcoming-matches`).subscribe({
-      next: (matches) => {
-        let match = matches.find(m => 
-          (m.homeTeam.id === this.selectedTeam1.id && m.awayTeam.id === this.selectedTeam2.id) ||
-          (m.homeTeam.id === this.selectedTeam2.id && m.awayTeam.id === this.selectedTeam1.id)
-        );
+      // Check if match exists
+      this.http.get<any[]>(`${this.API}/predictions/upcoming-matches`).subscribe({
+        next: (matches) => {
+          const match = matches.find(m => 
+            (m.homeTeam.id === this.selectedTeam1.id && m.awayTeam.id === this.selectedTeam2.id) ||
+            (m.homeTeam.id === this.selectedTeam2.id && m.awayTeam.id === this.selectedTeam1.id)
+          );
 
-        if (match) {
-          // Match exists, generate prediction
-          this.generatePredictionForMatch(match.id);
-        } else {
-          // No match found - create temporary prediction
+          if (match) {
+            this.generatePredictionForMatch(match.id);
+          } else {
+            this.createTempPrediction();
+          }
+        },
+        error: () => {
           this.createTempPrediction();
         }
-      },
-      error: () => {
-        this.createTempPrediction();
-      }
-    });
+      });
+    }, 0);
   }
 
   generatePredictionForMatch(matchId: number) {
@@ -157,18 +160,19 @@ export class DashboardComponent implements OnInit {
       next: (prediction: any) => {
         this.manualPrediction = prediction;
         this.isPredictingManual = false;
+        this.cdr.detectChanges();
         this.snackBar.open('✅ Prediction generated!', 'Close', { duration: 3000 });
         this.loadPredictions();
       },
       error: () => {
         this.isPredictingManual = false;
+        this.cdr.detectChanges();
         this.snackBar.open('❌ Prediction failed. Check if Ollama is running!', 'Close', { duration: 5000 });
       }
     });
   }
 
   createTempPrediction() {
-    // Simple mock prediction when no match exists
     this.manualPrediction = {
       match: {
         homeTeam: this.selectedTeam1,
@@ -183,6 +187,7 @@ export class DashboardComponent implements OnInit {
       createdAt: new Date()
     };
     this.isPredictingManual = false;
+    this.cdr.detectChanges();
     this.snackBar.open('ℹ️ Quick prediction (no match scheduled)', 'Close', { duration: 3000 });
   }
 
