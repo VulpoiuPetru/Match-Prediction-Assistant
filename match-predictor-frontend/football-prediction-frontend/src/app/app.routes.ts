@@ -8,6 +8,7 @@ import { AiTestComponent } from './components/ai-test-component/ai-test-componen
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: 'dashboard', component: DashboardComponent },
+  { path: '**', redirectTo: '/dashboard' }
 //   { path: 'teams', component: TeamsComponent },
 //   { path: 'matches', component: MatchesComponent },
 //   { path: 'predictions', component: PredictionsComponent },
