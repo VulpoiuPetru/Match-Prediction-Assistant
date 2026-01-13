@@ -46,16 +46,16 @@ public class AiPredictionService {
                 .orElseThrow(() -> new RuntimeException("Match not found with id: " + matchId));
 
         // ============ RAG STEP 1: RETRIEVE ============
-        System.out.println("🔍 RAG Step 1: Retrieving relevant data from ChromaDB...");
+        System.out.println("RAG Step 1: Retrieving relevant data from ChromaDB...");
         String retrievedContext = retrieveRelevantContext(match);
 
         // ============ RAG STEP 2: AUGMENT ============
-        System.out.println("📝 RAG Step 2: Augmenting prompt with retrieved data...");
+        System.out.println("RAG Step 2: Augmenting prompt with retrieved data...");
         String augmentedPrompt = createRAGPrompt(match, retrievedContext);
 
         try {
             // ============ RAG STEP 3: GENERATE ============
-            System.out.println("🤖 RAG Step 3: Generating AI response...");
+            System.out.println("RAG Step 3: Generating AI response...");
             OllamaApi directApi = new OllamaApi("http://localhost:11434");
             OllamaChatClient directClient = new OllamaChatClient(directApi);
 
@@ -81,7 +81,7 @@ public class AiPredictionService {
             // Store back in ChromaDB for future RAG retrievals
             chromaDbService.storePrediction(savedPrediction);
 
-            System.out.println("✅ RAG prediction completed and stored!");
+            System.out.println("RAG prediction completed and stored!");
             return savedPrediction;
 
         } catch (Exception e) {
@@ -89,15 +89,15 @@ public class AiPredictionService {
         }
     }
 
-    /**
-     * RAG STEP 1: Retrieve relevant historical context from multiple sources
-     */
+
+     // RAG STEP 1: Retrieve relevant historical context from multiple sources
+
     private String retrieveRelevantContext(Match match) {
         StringBuilder context = new StringBuilder();
 
         // 1. Get historical context from ChromaDB (vector search)
         if (chromaDbService.isConnected()) {
-            System.out.println("   → Searching ChromaDB vector store...");
+            System.out.println("Searching ChromaDB vector store...");
             String chromaContext = chromaDbService.getHistoricalContext(
                     match.getHomeTeam().getName(),
                     match.getAwayTeam().getName()
@@ -109,18 +109,18 @@ public class AiPredictionService {
         }
 
         // 2. Get head-to-head statistics from PostgreSQL
-        System.out.println("   → Querying PostgreSQL for head-to-head...");
+        System.out.println("Querying PostgreSQL for head-to-head...");
         String h2hStats = getHeadToHeadStats(match);
         context.append(h2hStats);
 
         // 3. Get recent form from PostgreSQL
-        System.out.println("   → Analyzing recent form...");
+        System.out.println("Analyzing recent form...");
         String formStats = getTeamFormStats(match);
         context.append(formStats);
 
         // 4. Get similar predictions from ChromaDB
         if (chromaDbService.isConnected()) {
-            System.out.println("   → Finding similar past predictions...");
+            System.out.println("Finding similar past predictions...");
             List<String> similarPredictions = chromaDbService.searchSimilarPredictions(
                     String.format("predictions for %s vs %s or similar matchups in %s",
                             match.getHomeTeam().getName(),
@@ -140,25 +140,25 @@ public class AiPredictionService {
         return context.toString();
     }
 
-    /**
-     * RAG STEP 2: Create augmented prompt with retrieved context
-     */
+
+     //RAG STEP 2: Create augmented prompt with retrieved context
+
     private String createRAGPrompt(Match match, String retrievedContext) {
         return String.format("""
             You are a professional football analyst using RAG (Retrieval-Augmented Generation).
             You have access to REAL HISTORICAL DATA retrieved from our database.
             
-            === MATCH TO PREDICT ===
+            MATCH TO PREDICT:
             Home Team: %s (%s)
             Away Team: %s (%s)
             League: %s
             Venue: %s
             Date: %s
             
-            === RETRIEVED CONTEXT (from our database) ===
+            RETRIEVED CONTEXT (from our database)
             %s
             
-            === YOUR TASK ===
+            YOUR TASK:
             Based on the RETRIEVED HISTORICAL DATA above (not general knowledge), predict:
             1. Home Win Probability (0-100)
             2. Draw Probability (0-100)
@@ -186,14 +186,14 @@ public class AiPredictionService {
                 match.getVenue() != null ? match.getVenue() : "TBD",
                 match.getMatchDate(),
                 retrievedContext.isEmpty() ?
-                        "⚠️ No historical data available for these teams. Base prediction on general patterns." :
+                        "No historical data available for these teams. Base prediction on general patterns." :
                         retrievedContext
         );
     }
 
-    /**
-     * Get head-to-head statistics from database
-     */
+
+     // Get head-to-head statistics from database
+
     private String getHeadToHeadStats(Match match) {
         List<Match> h2hMatches = matchRepository.findMatchesBetweenTeams(
                 match.getHomeTeam(),
@@ -201,10 +201,10 @@ public class AiPredictionService {
         );
 
         if (h2hMatches.isEmpty()) {
-            return "\n=== HEAD-TO-HEAD ===\nNo previous matches found.\n\n";
+            return "\nHEAD-TO-HEAD\nNo previous matches found.\n\n";
         }
 
-        StringBuilder stats = new StringBuilder("\n=== HEAD-TO-HEAD STATISTICS ===\n");
+        StringBuilder stats = new StringBuilder("\nHEAD-TO-HEAD STATISTICS\n");
         stats.append(String.format("Total matches: %d\n", h2hMatches.size()));
 
         int homeWins = 0, draws = 0, awayWins = 0;
@@ -241,18 +241,18 @@ public class AiPredictionService {
         return stats.toString();
     }
 
-    /**
-     * Get team form statistics
-     */
+
+     // Get team form statistics
+
     private String getTeamFormStats(Match match) {
         StringBuilder stats = new StringBuilder();
 
         // Home team form
-        stats.append(String.format("=== %s RECENT FORM ===\n", match.getHomeTeam().getName().toUpperCase()));
+        stats.append(String.format("RECENT FORM \n", match.getHomeTeam().getName().toUpperCase()));
         stats.append(getTeamForm(match.getHomeTeam()));
 
         // Away team form
-        stats.append(String.format("=== %s RECENT FORM ===\n", match.getAwayTeam().getName().toUpperCase()));
+        stats.append(String.format("RECENT FORM\n", match.getAwayTeam().getName().toUpperCase()));
         stats.append(getTeamForm(match.getAwayTeam()));
 
         return stats.toString();

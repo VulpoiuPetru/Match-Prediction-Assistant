@@ -43,18 +43,18 @@ public class RepositoryTestController {
                 teamRepository.save(team2);
             }
 
-            return "✅ Sample data created successfully!\n\n" +
+            return "Sample data created successfully!\n\n" +
                     "Users: " + userRepository.count() + "\n" +
                     "Teams: " + teamRepository.count();
 
         } catch (Exception e) {
-            return "❌ Error creating sample data: " + e.getMessage();
+            return "Error creating sample data: " + e.getMessage();
         }
     }
 
     @GetMapping("/count-all")
     public String countAll() {
-        return "📊 Database Statistics:\n\n" +
+        return "Database Statistics:\n\n" +
                 "Users: " + userRepository.count() + "\n" +
                 "Teams: " + teamRepository.count() + "\n" +
                 "Matches: 0 (none created yet)\n" +

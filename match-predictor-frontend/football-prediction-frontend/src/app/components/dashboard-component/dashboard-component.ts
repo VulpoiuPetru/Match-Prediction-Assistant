@@ -39,7 +39,6 @@ export class DashboardComponent implements OnInit {
 
  private http = inject(HttpClient);
   private snackBar = inject(MatSnackBar);
-  private cdr = inject(ChangeDetectorRef);
   private API = 'http://localhost:8080/api';
   
   teams: any[] = [];
@@ -68,32 +67,9 @@ export class DashboardComponent implements OnInit {
   initChat() {
     this.chatMessages = [{
       role: 'ai',
-      content: '👋 Hi! Ask me about match predictions.\n\nTry:\n• "Real Madrid vs Barcelona"\n• "Who will win Liverpool vs Chelsea?"\n• "Show me teams"'
+      content: 'Hi! Ask me about match predictions.\n\nTry:\n• "Real Madrid vs Barcelona"\n• "Who will win Liverpool vs Chelsea?"\n• "Show me teams"'
     }];
   }
-
-  // sendChat() {
-  //   if (!this.userMessage.trim() || this.isThinking) return;
-
-  //   const message = this.userMessage.trim();
-  //   this.chatMessages.push({ role: 'user', content: message });
-  //   this.userMessage = '';
-  //   this.isThinking = true;
-
-  //   this.http.post<{response: string}>(`${this.API}/chat/message`, { message }).subscribe({
-  //     next: (data) => {
-  //       this.chatMessages.push({ role: 'ai', content: data.response });
-  //       this.isThinking = false;
-  //     },
-  //     error: () => {
-  //       this.chatMessages.push({ 
-  //         role: 'ai', 
-  //         content: '❌ Error connecting to server. Make sure backend is running!' 
-  //       });
-  //       this.isThinking = false;
-  //     }
-  //   });
-  // }
   sendChat() {
     if (!this.userMessage.trim() || this.isThinking) return;
 
@@ -106,16 +82,14 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.chatMessages.push({ role: 'ai', content: data.response });
         this.isThinking = false;
-        this.cdr.detectChanges(); // ← ADAUGĂ ACEASTĂ LINIE
       },
       error: (err) => {
         console.error('❌ HTTP Error:', err);
         this.chatMessages.push({ 
           role: 'ai', 
-          content: '❌ Error connecting to server. Make sure backend is running!' 
+          content: 'Error connecting to server. Make sure backend is running!' 
         });
         this.isThinking = false;
-        this.cdr.detectChanges(); // ← ADAUGĂ ACEASTĂ LINIE
       }
     });
 }
@@ -125,11 +99,13 @@ export class DashboardComponent implements OnInit {
     this.http.get<any[]>(`${this.API}/predictions/teams`).subscribe({
       next: (data) => {
         this.teams = data;
+        console.log(this.loadingTeams);
         this.loadingTeams = false;
+        console.log(this.loadingTeams);
       },
       error: () => {
         this.loadingTeams = false;
-        this.snackBar.open('❌ Failed to load teams', 'Close', { duration: 3000 });
+        this.snackBar.open('Failed to load teams', 'Close', { duration: 3000 });
       }
     });
   }
@@ -149,7 +125,7 @@ export class DashboardComponent implements OnInit {
 
   predictManual() {
     if (!this.selectedTeam1 || !this.selectedTeam2 || this.selectedTeam1.id === this.selectedTeam2.id) {
-      this.snackBar.open('❌ Please select two different teams', 'Close', { duration: 3000 });
+      this.snackBar.open('Please select two different teams', 'Close', { duration: 3000 });
       return;
     }
 
@@ -157,7 +133,7 @@ export class DashboardComponent implements OnInit {
     setTimeout(() => {
       this.isPredictingManual = true;
       this.manualPrediction = null;
-      this.cdr.detectChanges();
+     // this.cdr.detectChanges();
 
       // Call the new RAG endpoint
       const requestBody = {
@@ -169,15 +145,13 @@ export class DashboardComponent implements OnInit {
         next: (prediction) => {
           this.manualPrediction = prediction;
           this.isPredictingManual = false;
-          this.cdr.detectChanges();
-          this.snackBar.open('✅ RAG Prediction with real data generated!', 'Close', { duration: 3000 });
+          this.snackBar.open('RAG Prediction with real data generated!', 'Close', { duration: 3000 });
           this.loadPredictions();
         },
         error: (err) => {
           this.isPredictingManual = false;
-          this.cdr.detectChanges();
           console.error('RAG Prediction error:', err);
-          this.snackBar.open('❌ Failed! Check if Ollama is running with llama3.2', 'Close', { duration: 5000 });
+          this.snackBar.open('Failed! Check if Ollama is running with llama3.2', 'Close', { duration: 5000 });
         }
       });
     }, 0);

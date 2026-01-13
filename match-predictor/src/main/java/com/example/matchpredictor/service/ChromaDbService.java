@@ -28,7 +28,7 @@ public class ChromaDbService {
 
     @PostConstruct
     public void init() {
-        System.out.println("=== CHROMADB CONNECTION DEBUG ===");
+        System.out.println("CHROMADB CONNECTION DEBUG:");
 
         try {
             System.out.println("1. Loading classes...");

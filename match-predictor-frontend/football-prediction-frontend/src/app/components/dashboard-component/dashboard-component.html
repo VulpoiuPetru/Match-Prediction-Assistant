@@ -2,7 +2,7 @@
   
   <!-- Header -->
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #1976d2;">⚽ Football Match Predictor</h1>
+    <h1 style="color: #1976d2;">Football Match Predictor</h1>
     <p style="color: #666;">Ask AI or select teams for predictions</p>
   </div>
 
@@ -11,7 +11,7 @@
     <!-- CHAT AI -->
     <mat-card>
       <mat-card-header>
-        <mat-card-title>🤖 AI Chat</mat-card-title>
+        <mat-card-title>AI Chat</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         
@@ -65,7 +65,7 @@
     <!-- TEAM SELECTOR -->
     <mat-card>
       <mat-card-header>
-        <mat-card-title>🎯 Quick Prediction</mat-card-title>
+        <mat-card-title>Quick Prediction</mat-card-title>
         <mat-card-subtitle>Select two teams</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
@@ -77,7 +77,7 @@
         <div *ngIf="!loadingTeams">
           <!-- Team 1 Selection -->
           <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 15px;">
-            <mat-label>🏠 Home Team</mat-label>
+            <mat-label>Home Team</mat-label>
             <mat-select [(ngModel)]="selectedTeam1">
               <mat-option *ngFor="let team of teams" [value]="team">
                 {{ team.name }} ({{ team.country }})
@@ -90,7 +90,7 @@
 
           <!-- Team 2 Selection -->
           <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 20px;">
-            <mat-label>✈️ Away Team</mat-label>
+            <mat-label>Away Team</mat-label>
             <mat-select [(ngModel)]="selectedTeam2">
               <mat-option *ngFor="let team of teams" [value]="team">
                 {{ team.name }} ({{ team.country }})
@@ -137,7 +137,7 @@
             </div>
 
             <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
-              <strong style="color: #1976d2;">💡 AI Analysis:</strong><br>
+              <strong style="color: #1976d2;">AI Analysis:</strong><br>
               <div style="margin-top: 8px; line-height: 1.5;">{{ manualPrediction.reasoning }}</div>
             </div>
           </div>
@@ -148,7 +148,7 @@
     <!-- RECENT PREDICTIONS -->
     <mat-card style="grid-column: 1 / -1;">
       <mat-card-header>
-        <mat-card-title>📊 All Predictions ({{ predictions.length }})</mat-card-title>
+        <mat-card-title>All Predictions ({{ predictions.length }})</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         
@@ -167,19 +167,19 @@
 
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
               <div style="text-align: center; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">🏠 Home Win</div>
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Home Win</div>
                 <div style="font-size: 2rem; font-weight: bold; color: #1976d2;">
                   {{ pred.homeWinProbability }}%
                 </div>
               </div>
               <div style="text-align: center; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">⚖️ Draw</div>
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Draw</div>
                 <div style="font-size: 2rem; font-weight: bold; color: #666;">
                   {{ pred.drawProbability }}%
                 </div>
               </div>
               <div style="text-align: center; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">✈️ Away Win</div>
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Away Win</div>
                 <div style="font-size: 2rem; font-weight: bold; color: #d32f2f;">
                   {{ pred.awayWinProbability }}%
                 </div>
@@ -187,13 +187,13 @@
             </div>
 
             <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
-              <strong style="color: #1976d2;">💡 AI Reasoning:</strong><br>
+              <strong style="color: #1976d2;">AI Reasoning:</strong><br>
               <div style="margin-top: 8px; line-height: 1.6; color: #555;">{{ pred.reasoning }}</div>
             </div>
 
             <div style="margin-top: 12px; font-size: 0.85rem; color: #999;">
-              🤖 {{ pred.modelVersion || 'llama3.2' }} • 
-              ⏰ {{ formatDate(pred.createdAt) }}
+              {{ pred.modelVersion || 'llama3.2' }} • 
+              {{ formatDate(pred.createdAt) }}
             </div>
           </div>
 

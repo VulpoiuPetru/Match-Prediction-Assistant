@@ -29,28 +29,28 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class ServiceTestSuite {
 
-    // ==================== TEAM SERVICE ====================
+    // TEAM SERVICE
     @Mock
     private TeamRepository teamRepository;
 
     @InjectMocks
     private TeamService teamService;
 
-    // ==================== MATCH SERVICE ====================
+    // MATCH SERVICE
     @Mock
     private MatchRepository matchRepository;
 
     @InjectMocks
     private MatchService matchService;
 
-    // ==================== AI PREDICTION SERVICE ====================
+    // AI PREDICTION SERVICE
     @Mock
     private AiPredictionRepository aiPredictionRepository;
 
     @Mock
     private OllamaChatClient ollamaChatClient;
 
-    @Mock  // ← CHANGE THIS FROM @InjectMocks to @Mock
+    @Mock
     private MatchService matchServiceForAI;
 
     @InjectMocks
@@ -82,7 +82,7 @@ public class ServiceTestSuite {
         prediction1.setReasoning("Real Madrid has home advantage");
     }
 
-    // ==================== TEAM SERVICE TESTS ====================
+    // TEAM SERVICE TESTS
 
     @Test
     void teamService_getAllTeams_ShouldReturnListOfTeams() {
@@ -131,7 +131,7 @@ public class ServiceTestSuite {
         verify(teamRepository, times(1)).findByCountry("Spain");
     }
 
-    // ==================== MATCH SERVICE TESTS ====================
+    //MATCH SERVICE TESTS
 
     @Test
     void matchService_getUpcomingMatches_ShouldReturnFutureMatches() {

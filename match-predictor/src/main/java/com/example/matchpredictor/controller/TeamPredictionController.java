@@ -33,7 +33,7 @@ public class TeamPredictionController {
     @PostMapping("/predict-teams")
     public ResponseEntity<?> predictBetweenTeams(@RequestBody TeamPredictionRequest request) {
         try {
-            System.out.println("🎯 RAG Prediction request: Team " + request.getHomeTeamId() + " vs " + request.getAwayTeamId());
+            System.out.println("RAG Prediction request: Team " + request.getHomeTeamId() + " vs " + request.getAwayTeamId());
 
             // Get teams from database
             Team homeTeam = teamService.getTeamById(request.getHomeTeamId())
@@ -51,30 +51,30 @@ public class TeamPredictionController {
 
             Match match;
             if (existingMatch.isPresent()) {
-                System.out.println("✅ Found existing match: " + existingMatch.get().getId());
+                System.out.println("Found existing match: " + existingMatch.get().getId());
                 match = existingMatch.get();
             } else {
                 // Create new match for RAG prediction
-                System.out.println("📝 Creating new match for RAG prediction...");
+                System.out.println("Creating new match for RAG prediction...");
                 match = new Match(homeTeam, awayTeam,
                         LocalDateTime.now().plusDays(7),
                         "Prediction Request");
                 match.setVenue(homeTeam.getName() + " Stadium");
                 match = matchService.createMatch(match);
-                System.out.println("✅ Match created with ID: " + match.getId());
+                System.out.println("Match created with ID: " + match.getId());
             }
 
             // Generate AI prediction using RAG
             // This will use your existing AiPredictionService.generatePrediction()
             // which already has RAG with ChromaDB, PostgreSQL stats, etc.
-            System.out.println("🤖 Generating RAG prediction with real data...");
+            System.out.println("Generating RAG prediction with real data...");
             AiPrediction prediction = aiPredictionService.generatePrediction(match.getId());
 
-            System.out.println("✅ RAG prediction generated successfully!");
+            System.out.println("RAG prediction generated successfully!");
             return ResponseEntity.ok(prediction);
 
         } catch (Exception e) {
-            System.err.println("❌ Error generating RAG prediction: " + e.getMessage());
+            System.err.println("Error generating RAG prediction: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error: " + e.getMessage());
         }

@@ -2,10 +2,10 @@ package com.example.matchpredictor.controller;
 
 import com.example.matchpredictor.service.MatchService;
 import com.example.matchpredictor.service.TeamService;
-import com.example.matchpredictor.service.AiPredictionService; // ← ADAUGĂ
+import com.example.matchpredictor.service.AiPredictionService;
 import com.example.matchpredictor.entity.Match;
 import com.example.matchpredictor.entity.Team;
-import com.example.matchpredictor.entity.AiPrediction; // ← ADAUGĂ
+import com.example.matchpredictor.entity.AiPrediction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +27,7 @@ public class SimpleChatController {
     private TeamService teamService;
 
     @Autowired
-    private AiPredictionService aiPredictionService; // ← ADAUGĂ
+    private AiPredictionService aiPredictionService;
 
     @PostMapping("/message")
     public ResponseEntity<Map<String, String>> sendMessage(@RequestBody Map<String, String> request) {
@@ -49,7 +49,7 @@ public class SimpleChatController {
     private String generateResponse(String message) {
         // Greetings
         if (message.contains("hello") || message.contains("hi") || message.contains("hey")) {
-            return "🤖 Hello! I'm your AI football prediction assistant powered by RAG (Retrieval-Augmented Generation). " +
+            return "Hello! I'm your AI football prediction assistant powered by RAG (Retrieval-Augmented Generation). " +
                     "I use real historical data and Ollama's LLaMA 3.2 to make predictions!\n\n" +
                     "Try: 'Chelsea vs Arsenal' or 'Real Madrid vs Barcelona'";
         }
@@ -108,7 +108,7 @@ public class SimpleChatController {
                         .replace("?", "")
                         .trim();
 
-                return generateRAGPrediction(team1Name, team2Name); // ← Folosește RAG
+                return generateRAGPrediction(team1Name, team2Name); // ← use RAG
             }
         }
 
@@ -156,7 +156,7 @@ public class SimpleChatController {
 
             if (foundTeam1 == null || foundTeam2 == null) {
                 return String.format(
-                        "❌ I couldn't find both teams in the database.\n\n" +
+                        "I couldn't find both teams in the database.\n\n" +
                                 "Available teams: %s",
                         allTeams.stream().limit(10).map(Team::getName).collect(Collectors.joining(", "))
                 );
@@ -178,7 +178,7 @@ public class SimpleChatController {
 
             // If match doesn't exist, create a temporary one
             if (existingMatch == null) {
-                System.out.println("🔨 Creating temporary match for prediction...");
+                System.out.println("Creating temporary match for prediction...");
                 Match tempMatch = new Match();
                 tempMatch.setHomeTeam(foundTeam1);
                 tempMatch.setAwayTeam(foundTeam2);
@@ -193,21 +193,21 @@ public class SimpleChatController {
             }
 
             // Generate RAG prediction using AiPredictionService
-            System.out.println("🤖 Generating RAG prediction for match ID: " + matchToPredict.getId());
+            System.out.println("Generating RAG prediction for match ID: " + matchToPredict.getId());
             AiPrediction prediction = aiPredictionService.generatePrediction(matchToPredict.getId());
 
             // Format the response
             return String.format(
-                    "🤖 **AI-Powered RAG Prediction**\n\n" +
+                    "**AI-Powered RAG Prediction**\n\n" +
                             "**%s vs %s**\n" +
                             "League: %s\n\n" +
-                            "📊 **Probabilities:**\n" +
-                            "🏠 %s: %.1f%%\n" +
-                            "⚖️ Draw: %.1f%%\n" +
-                            "✈️ %s: %.1f%%\n\n" +
-                            "🧠 **AI Reasoning:**\n%s\n\n" +
-                            "🎯 Confidence: %.0f%%\n" +
-                            "🔬 Model: %s",
+                            "**Probabilities:**\n" +
+                            "%s: %.1f%%\n" +
+                            "Draw: %.1f%%\n" +
+                            "%s: %.1f%%\n\n" +
+                            "**AI Reasoning:**\n%s\n\n" +
+                            "Confidence: %.0f%%\n" +
+                            "Model: %s",
                     foundTeam1.getName(),
                     foundTeam2.getName(),
                     matchToPredict.getLeague(),
@@ -223,11 +223,11 @@ public class SimpleChatController {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "❌ **Error generating AI prediction**\n\n" +
+            return "**Error generating AI prediction**\n\n" +
                     "Make sure:\n" +
-                    "✓ Ollama is running (http://localhost:11434)\n" +
-                    "✓ llama3.2 model is installed (`ollama pull llama3.2`)\n" +
-                    "✓ Database is connected\n\n" +
+                    "Ollama is running (http://localhost:11434)\n" +
+                    "llama3.2 model is installed (`ollama pull llama3.2`)\n" +
+                    "Database is connected\n\n" +
                     "Error details: " + e.getMessage();
         }
     }

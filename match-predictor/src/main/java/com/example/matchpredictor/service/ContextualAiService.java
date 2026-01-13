@@ -90,7 +90,7 @@ public class ContextualAiService {
         // 2. Add conversation history (MEMORY - this is what makes it context-aware!)
         List<ConversationContext> history = contextRepository.findRecentContext(sessionId, PageRequest.of(0, 5));
         if (!history.isEmpty()) {
-            promptBuilder.append("=== PREVIOUS CONVERSATION CONTEXT ===\n");
+            promptBuilder.append("PREVIOUS CONVERSATION CONTEXT:\n");
             // Reverse to show oldest first
             Collections.reverse(history);
             for (ConversationContext ctx : history) {
@@ -103,7 +103,7 @@ public class ContextualAiService {
                     promptBuilder.append("You responded: ").append(summary).append("\n\n");
                 }
             }
-            promptBuilder.append("=== NOW CONTINUING THE CONVERSATION ===\n\n");
+            promptBuilder.append(" NOW CONTINUING THE CONVERSATION \n\n");
         }
         // 3. Add tone instruction
         String toneInstruction = getToneInstruction(request.getTone());

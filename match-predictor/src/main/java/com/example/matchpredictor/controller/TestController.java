@@ -26,7 +26,7 @@ public class TestController {
     @GetMapping("/debug-config")
     public String debugConfig() {
         return """
-                🔍 DEBUG CONFIGURATION:
+                DEBUG CONFIGURATION:
                 
                 Model from application.properties: %s
                 OllamaChatClient class: %s
@@ -37,33 +37,33 @@ public class TestController {
 
     @GetMapping("/test-ai-detailed")
     public String testAiDetailed(@RequestParam(defaultValue = "Hello") String message) {
-        System.out.println("🔍 DEBUG: Starting test-ai-detailed");
-        System.out.println("🔍 DEBUG: Configured model: " + configuredModel);
-        System.out.println("🔍 DEBUG: Message: " + message);
-        System.out.println("🔍 DEBUG: OllamaChatClient instance: " + ollamaChatClient);
+        System.out.println("DEBUG: Starting test-ai-detailed");
+        System.out.println("DEBUG: Configured model: " + configuredModel);
+        System.out.println("DEBUG: Message: " + message);
+        System.out.println("DEBUG: OllamaChatClient instance: " + ollamaChatClient);
 
         try {
-            System.out.println("🔍 DEBUG: About to create Prompt");
+            System.out.println("DEBUG: About to create Prompt");
             Prompt prompt = new Prompt(message);
-            System.out. println("🔍 DEBUG: Prompt created successfully");
+            System.out. println("DEBUG: Prompt created successfully");
 
-            System.out.println("🔍 DEBUG: About to call ollamaChatClient.call()");
+            System.out.println("DEBUG: About to call ollamaChatClient.call()");
             ChatResponse response = ollamaChatClient.call(prompt);
-            System.out.println("🔍 DEBUG: Call successful, got response");
+            System.out.println("DEBUG: Call successful, got response");
 
             String result = response.getResult().getOutput(). getContent();
-            System.out. println("🔍 DEBUG: Extracted content from response");
+            System.out. println("DEBUG: Extracted content from response");
 
-            return "🤖 AI Response:\n\n" + result;
+            return "AI Response:\n\n" + result;
 
         } catch (Exception e) {
-            System.err.println("❌ DEBUG: Exception occurred");
-            System.err.println("❌ DEBUG: Exception type: " + e.getClass().getName());
-            System.err.println("❌ DEBUG: Exception message: " + e.getMessage());
-            System.err.println("❌ DEBUG: Stack trace:");
+            System.err.println("DEBUG: Exception occurred");
+            System.err.println("DEBUG: Exception type: " + e.getClass().getName());
+            System.err.println("DEBUG: Exception message: " + e.getMessage());
+            System.err.println("DEBUG: Stack trace:");
             e.printStackTrace();
 
-            return "❌ DETAILED ERROR:\n" +
+            return "DETAILED ERROR:\n" +
                     "Exception Type: " + e.getClass(). getSimpleName() + "\n" +
                     "Message: " + e.getMessage() + "\n" +
                     "Configured Model: " + configuredModel + "\n" +
@@ -76,18 +76,18 @@ public class TestController {
     @GetMapping("/")
     public String home() {
         return """
-                ⚽ Match Prediction Assistant is running!  ⚽
+                Match Prediction Assistant is running!
                 
-                🔧 DEBUG Endpoints:
+                DEBUG Endpoints:
                 - GET /debug-config (Show configuration)
                 - GET /test-ai-detailed? message=Hello (Detailed AI test)
                 
-                🔗 API Endpoints:
+                API Endpoints:
                 - GET /initialize-data (Create sample teams & matches)
                 - GET /api/predictions/teams (List all teams)
                 - GET /api/predictions/upcoming-matches (Get matches for prediction)
                 
-                🤖 AI Predictions:
+                AI Predictions:
                 - POST /api/predictions/generate/{matchId} (Generate AI prediction)
                 - GET /api/predictions/match/{matchId}/latest (Get latest prediction)
                 - GET /api/predictions/stats (Prediction accuracy)
@@ -113,9 +113,9 @@ public class TestController {
                                     .withModel("llama3.2"))
             );
 
-            return "🤖 AI Response:\n\n" + response.getResult().getOutput(). getContent();
+            return "AI Response:\n\n" + response.getResult().getOutput(). getContent();
         } catch (Exception e) {
-            return "❌ Error: " + e.getMessage() +
+            return "Error: " + e.getMessage() +
                     "\n\nMake sure Ollama is running with model llama3.2" +
                     "\n\nTry /test-ai-detailed for more debug info";
         }
@@ -123,10 +123,10 @@ public class TestController {
 
     @GetMapping("/status")
     public String status() {
-        return "✅ Application Status: RUNNING\n" +
-                "🤖 AI Service: Ollama (llama3.2)\n" +
-                "🗄️ Database: PostgreSQL\n" +
-                "🌐 Server: http://localhost:8080\n" +
-                "🔧 Debug: /debug-config, /test-ai-detailed";
+        return "Application Status: RUNNING\n" +
+                "AI Service: Ollama (llama3.2)\n" +
+                "Database: PostgreSQL\n" +
+                "Server: http://localhost:8080\n" +
+                "Debug: /debug-config, /test-ai-detailed";
     }
 }
